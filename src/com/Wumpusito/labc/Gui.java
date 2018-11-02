@@ -15,6 +15,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 public class Gui extends JFrame{
 	ImageIcon hunterIcon ;
@@ -24,12 +25,15 @@ public class Gui extends JFrame{
 	
 	public Gui() throws IOException{
 		initGame();
+		this.setVisible(true);
 		while (!AI.getGold() || AI.getAlive())
 			changeGameState();
 	}
 	
-	public String decideImage() {
+	public ImageIcon decideImage() {
 		String img = "";
+		ImageIcon hunterImage;
+		
 		if (AI.getFacing()==board.NORTH)
 			img = "images/hunter13.jpg";
 		else if (AI.getFacing()==board.EAST)
@@ -39,7 +43,10 @@ public class Gui extends JFrame{
 		else if (AI.getFacing()==board.WEST)
 			img = "images/hunter12.jpg";
 		
-		return img;
+		hunterImage = new ImageIcon(img);
+		hunterImage.setImage(hunterImage.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
+				
+		return hunterImage;
 	}
 	
 	public JLabel decidePos(Square sqr){
@@ -66,10 +73,28 @@ public class Gui extends JFrame{
 	
 	private void changeGameState() throws IOException {
 		char next = AI.decideMove();
+		ImageIcon tileVisited = new ImageIcon("images/Tile.jpg");
+		ImageIcon ded = new ImageIcon("images/roar.jpg");
+		
+		tileVisited.setImage(tileVisited.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
+		ded.setImage(ded.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
+		
 		if (next=='f') {
 			setIcons();
-			decidePos(AI.current).setIcon(new ImageIcon(decideImage()));
-			decidePos(AI.previous).setIcon(new ImageIcon("images/Tile1.jpg"));
+			decidePos(AI.current).setIcon(decideImage());
+			decidePos(AI.previous).setIcon(tileVisited);
+		}
+		if (next =='t') {
+			setIcons();
+			decidePos(AI.current).setIcon(decideImage());
+		}
+		if (next == 'k') {
+			setIcons();
+			decidePos(AI.current).setIcon(ded);
+		}
+		if (next == 'd') {
+			setIcons();
+			decidePos(AI.current).setIcon(ded);
 		}
 	}
 	
@@ -82,9 +107,8 @@ public class Gui extends JFrame{
 		
 		pitImage = new ImageIcon("images/pitc.gif");
 		goldImage = new ImageIcon("images/gold.jpg");
-		wumpusImage = new ImageIcon("images/wumpusc.gif");
+		wumpusImage = new ImageIcon("images/wumpusc.jpg");
 		breezeImage = new ImageIcon("images/breeze.jpg");
-		
 		
 		pitImage.setImage(pitImage.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
 		goldImage.setImage(goldImage.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
@@ -101,13 +125,16 @@ public class Gui extends JFrame{
 					decidePos(board.squares[i][j]).setIcon(goldImage);
 				else if(board.squares[i][j].hasWumpus)
 					decidePos(board.squares[i][j]).setIcon(wumpusImage);
-				
 			}	
 	}
 	
 	private void initGui() {
 		JPanel panel = new JPanel();
-		hunterIcon = new ImageIcon(decideImage());
+		JPanel panel1 = new JPanel();
+		JTextField tf = new JTextField("Playing");
+		JFrame frame = new JFrame("WumpusWorld");
+		
+		hunterIcon = decideImage();
 		
 		ImageIcon Square = loadImage();
 		Square.setImage(Square.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
@@ -121,19 +148,17 @@ public class Gui extends JFrame{
 		setIcons();
 		label[0][0].setIcon(hunterIcon);
 		
-		
 		panel.setLayout(new GridLayout(4,4));
+		panel1.add(tf);
 		
 		createLayout(panel);
 		int height = Square.getIconHeight();
 		int width = Square.getIconWidth();
 		
-		
 		this.setPreferredSize(new Dimension(width,height));
 		this.setLocationRelativeTo(null);
 		this.setTitle("WUMPUS WORLD");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
 	}
 	
 	private void initGame() throws IOException{;
@@ -168,9 +193,7 @@ public class Gui extends JFrame{
 	
 	
 	 public static void main(String[] args) throws IOException {
-	            Gui ex = new Gui();
-	            ex.setVisible(true);
-	        
+	            Gui ex = new Gui();  
 	 }
 }
 

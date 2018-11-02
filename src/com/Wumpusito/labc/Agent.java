@@ -10,6 +10,7 @@ public class Agent {
 	public Square current;
 	public Square previous;
 	private int Score;
+	private int moves;
 	
 	public Agent(Square starting) {
 		this.previous = null;
@@ -21,25 +22,19 @@ public class Agent {
 		this.Score = 0;
 		current.hasPlayer = true;
 		current.visited = false;
+		this.moves = 0;
 	}
 	
 	public char decideMove() throws IOException {
 		Square nextMove = current.getNeighbors()[Board.WEST];
-		char next = 0 ; int moves = 0;
+		char next = 0 ; 
 			moves++;
 			if(moves>100)
 				next = 'k';
 			else {
-				if(current.hasWumpus || current.hasPit) {
-					isAlive = false;
-				}
 				analyze(current);
 				/*System.out.println(current.x+" , "+current.y+"[PIT: "+current.hasPit+",WUMPUS: "+current.hasWumpus+",GOLD: "+current.hasGold
 					+	",BREEZE: "+current.hasBreeze+",STENCH: "+current.hasStench+")");*/
-				if(current.hasGlitter) {
-					pickupGold();
-					gotGold = true;
-				}
 				for(Square nm : current.getNeighbors()) {
 					if( !nm.unreachable && nm.wumpusRisk>3  ) {
 						if(current.getNeighbors()[Facing]!=nm) {
@@ -58,14 +53,20 @@ public class Agent {
 						nextMove = current.getNeighbors()[Facing];
 		
 				}
-				if(current.getNeighbors()[Facing]!=nextMove) {
+				if(current.getNeighbors()[Facing]!=nextMove) 
 					next = 't';
-				}
-				else {
+				
+				else 
 					next = 'f';
-				}
+				
+				
 				if(nextMove.unreachable)
 					next='t';
+				
+				if(current.hasGlitter) 
+					next = 'g';
+				else if(current.hasWumpus || current.hasPit)
+					next = 'd';
 			}
 			/*System.out.println(next);*/
 			/*System.in.read();*/
@@ -90,9 +91,14 @@ public class Agent {
 				Suicide();
 				break;
 				
-			default:
+			case 'g':
+				pickupGold();
+				break;
+			
+			case 'd':
 				Suicide();
 				break;
+				
 			}
 		return next;
 		}
@@ -220,6 +226,7 @@ public class Agent {
 	
 	private void Suicide() {
 		this.isAlive=false;
+		this.gotGold=true;
 	}
 	
 	private void turn90() {
