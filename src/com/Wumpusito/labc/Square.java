@@ -14,6 +14,7 @@ public class Square {
 	int pitRisk;
 	int wumpusRisk;
 	int x,y;
+	int timesVisited;
 	Square[] neighbors = new Square[4];
 	
 	public Square(int x,int y) {
@@ -31,6 +32,7 @@ public class Square {
 		this.wumpusRisk = 0;
 		this.visited = false;
 		this.unreachable = false;
+		this.timesVisited = 0;
 	}
 	
 	public void neighbors(Square[][] square) {

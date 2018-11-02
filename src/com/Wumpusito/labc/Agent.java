@@ -1,32 +1,31 @@
 package com.Wumpusito.labc;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import sun.audio.AudioStream;
+import sun.audio.AudioPlayer;
+import sun.audio.AudioData;
+import sun.audio.ContinuousAudioDataStream;
+import javax.sound.sampled.AudioInputStream;
 
-public class Agent {
-	private boolean hasArrow;
-	private boolean isAlive;
-	private boolean gotGold;
-	private int Facing;
-	public Square current;
-	public Square previous;
-	private int Score;
-	private int moves;
+public class Agent extends Player{
+	InputStream[] sounds = new InputStream[10];
+	AudioStream[] audio = new AudioStream[10];
+	ContinuousAudioDataStream wakaCont;
+	
 	
 	public Agent(Square starting) {
-		this.previous = null;
-		this.current = starting;
-		this.hasArrow = true;
-		this.gotGold = false;
-		this.isAlive = true;
-		this.Facing = Board.WEST;
-		this.Score = 0;
-		current.hasPlayer = true;
-		current.visited = false;
-		this.moves = 0;
+		super(starting);
 	}
 	
 	public char decideMove() throws IOException {
 		Square nextMove = current.getNeighbors()[Board.WEST];
+		sounds[0] = new FileInputStream("sounds/gameover.wav");
+		audio[0] = new AudioStream(sounds[0]);
+		sounds[1] = new FileInputStream("sounds/victory.wav");
+		audio[1] = new AudioStream(sounds[1]);
+		
 		char next = 0 ; 
 			moves++;
 			if(moves>100)
@@ -36,37 +35,36 @@ public class Agent {
 				/*System.out.println(current.x+" , "+current.y+"[PIT: "+current.hasPit+",WUMPUS: "+current.hasWumpus+",GOLD: "+current.hasGold
 					+	",BREEZE: "+current.hasBreeze+",STENCH: "+current.hasStench+")");*/
 				for(Square nm : current.getNeighbors()) {
-					if( !nm.unreachable && nm.wumpusRisk>3  ) {
-						if(current.getNeighbors()[Facing]!=nm) {
-							next = 't';
-							break;
-						}
-						else {
-							next = 's';
-							break;
-						}	
-					}	
 					if( !nm.unreachable && nm.pitRisk<nextMove.pitRisk ) 
 						nextMove = nm;
-					
 					else
 						nextMove = current.getNeighbors()[Facing];
-		
+				}
+				if(current.hasBreeze) {
+					if(previous!=null)
+						if(moves<50)
+							nextMove=previous;
 				}
 				if(current.getNeighbors()[Facing]!=nextMove) 
 					next = 't';
-				
 				else 
 					next = 'f';
-				
-				
 				if(nextMove.unreachable)
 					next='t';
-				
 				if(current.hasGlitter) 
 					next = 'g';
 				else if(current.hasWumpus || current.hasPit)
 					next = 'd';
+				else if(current.hasStench) {
+					if (arrows>0)
+						next = 's';
+					else {
+						if(current.getNeighbors()[Facing]!=nextMove) 
+							next = 't';
+						else
+							next = 'f';
+					}	
+				}
 			}
 			/*System.out.println(next);*/
 			/*System.in.read();*/
@@ -88,14 +86,20 @@ public class Agent {
 				break;
 			
 			case 'k':
+				AudioPlayer.player.stop(wakaCont);
+				AudioPlayer.player.start(audio[0]);
 				Suicide();
 				break;
 				
 			case 'g':
+				AudioPlayer.player.stop(wakaCont);
+				AudioPlayer.player.start(audio[1]);
 				pickupGold();
 				break;
 			
 			case 'd':
+				AudioPlayer.player.stop(wakaCont);
+				AudioPlayer.player.start(audio[0]);
 				Suicide();
 				break;
 				
@@ -108,7 +112,7 @@ public class Agent {
 		if(!tile.visited) {
 			if (tile.hasBreeze && tile.hasStench)
 				for (Square risky : tile.getNeighbors()) {
-					if(!risky.isSafe ) {
+					if(!risky.isSafe) {
 						risky.pitRisk++;
 						risky.wumpusRisk++;
 					}	
@@ -116,7 +120,7 @@ public class Agent {
 			else if (!tile.hasBreeze && !tile.hasStench) {
 				for(Square risky : tile.getNeighbors()) {
 					if(!risky.isSafe) {
-						risky.wumpusRisk=0;
+						risky.wumpusRisk = 0;
 						risky.pitRisk = 0;
 						risky.isSafe = true;
 					}
@@ -138,110 +142,4 @@ public class Agent {
 			}
 		}
 	}
-	
-	private void shoot() {
-		Square trail = this.current;
-		if (hasArrow) {
-			hasArrow = false;
-			if(Facing == Board.NORTH)
-				while(!trail.hasWumpus && trail.getNeighbors()[Board.NORTH]!=null)
-					trail = trail.getNeighbors()[Board.NORTH];
-			
-			else if(Facing == Board.EAST)
-				while(!trail.hasWumpus && trail.getNeighbors()[Board.EAST]!=null)
-					trail = trail.getNeighbors()[Board.EAST];			
-			
-			else if(Facing == Board.SOUTH)
-				while(!trail.hasWumpus && trail.getNeighbors()[Board.SOUTH]!=null)
-					trail = trail.getNeighbors()[Board.SOUTH];	
-			
-			else if(Facing == Board.WEST)
-				while(!trail.hasWumpus && trail.getNeighbors()[Board.WEST]!=null)
-					trail = trail.getNeighbors()[Board.WEST];	
-			
-			if(trail.hasWumpus) {
-				trail.killWumpus();
-				this.Score+=1000;
-				
-				for (int i=0;i<=Board.COLS;i++)
-					for (int j=0;j<=Board.ROWS;j++)
-						Board.squares[i][j].wumpusRisk=0;
-			}
-				
-			else
-				this.Score-=1000;
-		
-		}
-	}
-	
-	private void pickupGold() {
-		current.hasGold = false;
-		this.gotGold = true; 
-		this.Score+=10000;
-	}
-	
-	private void moveForward() {
-		Square next = previous;
-		if(Facing == Board.NORTH) {
-			next = current.getNeighbors()[Facing];
-			if(current.x == 4) {
-				/*System.out.println("ouch");*/
-				current.getNeighbors()[Facing].unreachable = true;
-				next = this.current;
-			}		
-		}
-			
-		else if(Facing == Board.SOUTH) {
-			next = current.getNeighbors()[Facing];
-			if(current.x == 1) {
-				/*System.out.println("ouch");*/
-				current.getNeighbors()[Facing].unreachable = true;
-				next = this.current;
-			}
-		}
-		
-		else if(Facing == Board.EAST) {
-			next = current.getNeighbors()[Facing];
-			if(current.y == 4) {
-				/*System.out.println("ouch");*/
-				current.getNeighbors()[Facing].unreachable = true;
-				next = this.current;
-			}
-		}
-		
-		else if(Facing == Board.WEST) {
-			next = current.getNeighbors()[Facing];
-			if(current.y == 1) {
-				/*System.out.println("ouch");*/
-				current.getNeighbors()[Facing].unreachable = true;
-				next = this.current;
-			}
-		}
-		isAlive = next.hasPit?false:true;
-		isAlive = next.hasWumpus?false:true;
-		this.previous = current;
-		this.current = next;
-		this.Score-=10;
-	}
-	
-	private void Suicide() {
-		this.isAlive=false;
-		this.gotGold=true;
-	}
-	
-	private void turn90() {
-		this.Facing = Facing==0?3:Facing-1;
-		this.Score-=10;
-	}
-	
-	public int getFacing() {
-		return this.Facing;
-	}
-	public boolean getAlive() {
-		return this.isAlive;
-	}
-	public boolean getGold() {
-		return this.gotGold;
-	}
-
 }

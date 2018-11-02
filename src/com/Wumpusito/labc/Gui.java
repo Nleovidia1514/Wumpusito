@@ -4,17 +4,28 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.FileInputStream;
 import java.io.IOException;
+
+import sun.audio.AudioData;
+import sun.audio.AudioPlayer;
+import sun.audio.AudioStream;
+import sun.audio.ContinuousAudioDataStream;
 
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 public class Gui extends JFrame{
@@ -22,12 +33,27 @@ public class Gui extends JFrame{
 	private Board board;
 	private Agent AI; 
 	private JLabel[][] label = new JLabel[4][4];
+	private JTextArea score;
+	private JTextArea moves;
+	private JTextArea arrows;
+	private JPanel panel;
+	private JPanel panel1;
+	private String guiType;
 	
 	public Gui() throws IOException{
 		initGame();
 		this.setVisible(true);
-		while (!AI.getGold() || AI.getAlive())
+		AI.sounds[2] = new FileInputStream("sounds/waka.wav");
+		AI.audio[2] = new AudioStream(AI.sounds[2]);
+		AudioData waka = AI.audio[2].getData();
+		AI.wakaCont = new ContinuousAudioDataStream(waka);
+		AudioPlayer.player.start(AI.wakaCont);
+		while (!AI.getGold() && AI.getAlive()) {
 			changeGameState();
+			score.setText("Score: "+AI.getScore());
+			moves.setText("Moves: "+AI.getMoves());
+			arrows.setText("Arrows: "+AI.arrows);
+		}
 	}
 	
 	public ImageIcon decideImage() {
@@ -44,7 +70,26 @@ public class Gui extends JFrame{
 			img = "images/hunter12.jpg";
 		
 		hunterImage = new ImageIcon(img);
-		hunterImage.setImage(hunterImage.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
+		hunterImage.setImage(hunterImage.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH));
+				
+		return hunterImage;
+	}
+	
+	public ImageIcon decideImageDed() {
+		String img = "";
+		ImageIcon hunterImage;
+		
+		if (AI.getFacing()==board.NORTH)
+			img = "images/ded13.jpg";
+		else if (AI.getFacing()==board.EAST)
+			img = "images/ded10.jpg";
+		else if (AI.getFacing()==board.SOUTH)
+			img = "images/ded11.jpg";
+		else if (AI.getFacing()==board.WEST)
+			img = "images/ded12.jpg";
+		
+		hunterImage = new ImageIcon(img);
+		hunterImage.setImage(hunterImage.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH));
 				
 		return hunterImage;
 	}
@@ -74,7 +119,8 @@ public class Gui extends JFrame{
 	private void changeGameState() throws IOException {
 		char next = AI.decideMove();
 		ImageIcon tileVisited = new ImageIcon("images/Tile.jpg");
-		ImageIcon ded = new ImageIcon("images/roar.jpg");
+		ImageIcon ded = decideImageDed();
+		ImageIcon rotate = decideImage();
 		
 		tileVisited.setImage(tileVisited.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
 		ded.setImage(ded.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
@@ -86,7 +132,7 @@ public class Gui extends JFrame{
 		}
 		if (next =='t') {
 			setIcons();
-			decidePos(AI.current).setIcon(decideImage());
+			decidePos(AI.current).setIcon(rotate);
 		}
 		if (next == 'k') {
 			setIcons();
@@ -103,22 +149,31 @@ public class Gui extends JFrame{
 		ImageIcon goldImage;
 		ImageIcon wumpusImage;
 		ImageIcon breezeImage;
-		ImageIcon SquareImage;
+		ImageIcon stenchImage;
+		ImageIcon breezeStenchImage;
 		
 		pitImage = new ImageIcon("images/pitc.gif");
 		goldImage = new ImageIcon("images/gold.jpg");
 		wumpusImage = new ImageIcon("images/wumpusc.jpg");
 		breezeImage = new ImageIcon("images/breeze.jpg");
+		stenchImage = new ImageIcon("images/stench.jpg");
+		breezeStenchImage = new ImageIcon("images/breezestench.jpg");
 		
 		pitImage.setImage(pitImage.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
 		goldImage.setImage(goldImage.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
 		wumpusImage.setImage(wumpusImage.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
 		breezeImage.setImage(breezeImage.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
+		stenchImage.setImage(stenchImage.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
+		breezeStenchImage.setImage(breezeStenchImage.getImage().getScaledInstance(150, 150, Image.SCALE_DEFAULT));
 		
 		for(int i=1;i<5;i++)
 			for(int j=1;j<5;j++) {
-				if(board.squares[i][j].hasBreeze)
+				if(board.squares[i][j].hasBreeze && !board.squares[i][j].hasStench)
 					decidePos(board.squares[i][j]).setIcon(breezeImage);
+				else if(!board.squares[i][j].hasBreeze && board.squares[i][j].hasStench)
+					decidePos(board.squares[i][j]).setIcon(stenchImage);
+				else if(board.squares[i][j].hasBreeze && board.squares[i][j].hasStench)
+					decidePos(board.squares[i][j]).setIcon(breezeStenchImage);
 				if(board.squares[i][j].hasPit)
 					decidePos(board.squares[i][j]).setIcon(pitImage);
 				else if(board.squares[i][j].hasGold)
@@ -128,11 +183,59 @@ public class Gui extends JFrame{
 			}	
 	}
 	
+	private void chooseGui() {
+		JButton pacman = new JButton("PacMan");
+		JButton zelda = new JButton("Zelda");
+		JLabel label = new JLabel();
+		JPanel panel2 = new JPanel();
+		
+		pacman.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+					if(e.getSource()==pacman)
+						try {
+							panel2.setVisible(false);
+							initGame();
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+			}
+		});
+		
+		zelda.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(e.getSource()==zelda)
+					try {
+						panel2.removeAll();
+						initGame();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+			}
+		});
+		panel2.add(pacman);
+		panel2.add(zelda);
+		createLayout(panel2);
+		this.setPreferredSize(new Dimension(panel2.getWidth(),panel2.getHeight()));
+		this.setLocationRelativeTo(null);
+		this.setTitle("WUMPUS WORLD");
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+	
 	private void initGui() {
-		JPanel panel = new JPanel();
-		JPanel panel1 = new JPanel();
-		JTextField tf = new JTextField("Playing");
-		JFrame frame = new JFrame("WumpusWorld");
+		panel = new JPanel();
+		panel1 = new JPanel();
+		score = new JTextArea("Score: "+AI.getScore());
+		moves = new JTextArea("Moves: "+AI.getMoves());
+		arrows = new JTextArea("Arrows: "+AI.arrows);
+		score.setFont(new Font("perro",Font.ITALIC,20));
+		moves.setFont(new Font("perro",Font.ITALIC,20));
+		arrows.setFont(new Font("perro",Font.ITALIC,20));
+		panel1.add(score);
+		panel1.add(moves);
+		panel1.add(arrows);
+		JPanel supreme = new JPanel();
 		
 		hunterIcon = decideImage();
 		
@@ -149,13 +252,17 @@ public class Gui extends JFrame{
 		label[0][0].setIcon(hunterIcon);
 		
 		panel.setLayout(new GridLayout(4,4));
-		panel1.add(tf);
+		panel1.setLayout(new GridLayout(3,1));
+		supreme.add(panel);
+		supreme.add(panel1);
 		
-		createLayout(panel);
+		createLayout(supreme);
 		int height = Square.getIconHeight();
 		int width = Square.getIconWidth();
+		int height1 = supreme.getHeight();
+		int width1 = supreme.getWidth();
 		
-		this.setPreferredSize(new Dimension(width,height));
+		this.setSize(new Dimension(width1+100,height1+100));
 		this.setLocationRelativeTo(null);
 		this.setTitle("WUMPUS WORLD");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
