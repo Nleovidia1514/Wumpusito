@@ -1,4 +1,4 @@
-package com.Wumpusito.labc;
+package com.labc.Wumpusito;
 
 public class Square {
 	boolean hasWumpus;
@@ -15,6 +15,7 @@ public class Square {
 	int wumpusRisk;
 	int x,y;
 	int timesVisited;
+	float visitedRisk;
 	Square[] neighbors = new Square[4];
 	
 	public Square(int x,int y) {

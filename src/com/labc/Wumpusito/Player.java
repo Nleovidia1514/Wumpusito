@@ -1,16 +1,17 @@
-package com.Wumpusito.labc;
+package com.labc.Wumpusito;
 
 public class Player {
 	protected boolean isAlive;
 	protected boolean gotGold;
 	protected int Facing;
-	public Square current;
-	public Square previous;
+	protected Square current;
+	protected Square previous;
 	protected int Score;
 	protected int moves;
 	protected int arrows;
+	private Board Board;
 	
-	public Player(Square starting) {
+	public Player(Square starting, Board Board) {
 		previous = null;
 		current = starting;
 		arrows = 1;
@@ -21,11 +22,12 @@ public class Player {
 		current.hasPlayer = true;
 		current.visited = false;
 		moves = 0;
-		
+		this.Board = Board;
 	}
 	
-	protected void shoot() {
+	protected boolean shoot() {
 		Square trail = this.current;
+		boolean wumpusKilled=false;
 		if (arrows>0) {
 			arrows--;
 			if(Facing == Board.NORTH)
@@ -46,6 +48,7 @@ public class Player {
 			
 			if(trail.hasWumpus) {
 				trail.killWumpus();
+				wumpusKilled = true;
 				this.Score+=1000;
 				trail = null;
 				for (int i=0;i<=Board.COLS;i++)
@@ -58,6 +61,7 @@ public class Player {
 
 			}
 		}
+		return wumpusKilled;
 	}
 	
 	protected void pickupGold() {
@@ -66,51 +70,54 @@ public class Player {
 		this.Score+=10000;
 	}
 	
-	protected void moveForward() {
+	protected boolean moveForward() {
 		Square next = previous;
+		boolean ow=false;
 		if(Facing == Board.NORTH) {
 			next = current.getNeighbors()[Facing];
 			if(current.x == 4) {
-				/*System.out.println("ouch");*/
 				current.getNeighbors()[Facing].unreachable = true;
 				next = this.current;
 				current = previous;
+				ow = true;
 			}		
 		}
 			
 		else if(Facing == Board.SOUTH) {
 			next = current.getNeighbors()[Facing];
 			if(current.x == 1) {
-				System.out.println("ouch");
 				current.getNeighbors()[Facing].unreachable = true;
 				next = this.current;
 				current = previous;
+				ow = true;
 			}
 		}
 		
 		else if(Facing == Board.EAST) {
 			next = current.getNeighbors()[Facing];
 			if(current.y == 4) {
-				/*System.out.println("ouch");*/
 				current.getNeighbors()[Facing].unreachable = true;
 				next = this.current;
 				current = previous;
+				ow = true;
 			}
 		}
 		
 		else if(Facing == Board.WEST) {
 			next = current.getNeighbors()[Facing];
 			if(current.y == 1) {
-				System.out.println("ouch");
 				current.getNeighbors()[Facing].unreachable = true;
 				next = this.current;
 				current = previous;
+				ow = true;
 			}
 		}
 		this.previous = current;
 		this.current = next;
 		this.current.timesVisited++;
 		this.Score-=10;
+		this.current.visitedRisk+=0.25;
+		return ow;
 	}
 	
 	protected void Suicide() {
@@ -118,8 +125,12 @@ public class Player {
 		this.gotGold=true;
 	}
 	
-	protected void turn90() {
+	protected void turn90right() {
 		this.Facing = Facing==3?0:Facing+1;
+		this.Score-=10;
+	}
+	protected void turn90left() {
+		this.Facing = Facing == 0?3:Facing-1;
 		this.Score-=10;
 	}
 	
@@ -137,5 +148,11 @@ public class Player {
 	}
 	public int getMoves() {
 		return this.moves;
+	}
+	public Square getCurrent() {
+		return this.current;
+	}
+	public Square getPrevious() {
+		return this.previous;
 	}
 }
