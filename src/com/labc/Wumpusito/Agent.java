@@ -44,6 +44,8 @@ public class Agent extends Player{
 				/*System.out.println(current.x+" , "+current.y+"[PIT: "+current.hasPit+",WUMPUS: "+current.hasWumpus+",GOLD: "+current.hasGold
 					+	",BREEZE: "+current.hasBreeze+",STENCH: "+current.hasStench+")");*/
 				for(Square nm : current.getNeighbors()) {
+					/*System.out.println(nm.x+","+nm.y+")pitrisk: "+nm.pitRisk);
+					System.out.println(nm.x+","+nm.y+")wumpusrisk: "+nm.wumpusRisk);
 					/*System.out.println(nm.x+","+nm.y+" pitrisk: "+nm.pitRisk+" is safe?"+nm.isSafe);
 					System.out.println(nextMove.x+","+nextMove.y+"pitrisk: "+nextMove.pitRisk+" is safe?"+nextMove.isSafe);*/
 					if( !nm.unreachable && ((nm.pitRisk+nm.visitedRisk+nm.wumpusRisk)<(nextMove.wumpusRisk+nextMove.pitRisk+nextMove.visitedRisk) ) )
@@ -52,14 +54,9 @@ public class Agent extends Player{
 						nextMove = nm;
 				}
 				
-				if(looping==25)
-					nextMove = takeRisks(current.getNeighbors()[Facing]);
-				
-				if(current.getNeighbors()[Facing]!=nextMove) {
+				if(current.getNeighbors()[Facing]!=nextMove) 
 					next = 't';
-					
-				}
-					
+				
 				else {
 					if(current.getNeighbors()[Facing].unreachable)
 						next = 't';
@@ -95,8 +92,13 @@ public class Agent extends Player{
 			
 			case 'f':
 				current.visited = true;
-				if(moveForward())
+				if(moveForward()) {
 					AudioPlayer.player.start(audio[5]);
+					analyze2(current);
+				}
+				else
+					analyze2(previous);
+					
 				/*System.out.println("FORWARD: "+current.x+" , "+current.y+"   , to the   "+Facing);*/
 				break;
 			
@@ -148,47 +150,156 @@ public class Agent extends Player{
 			}
 		return next;
 		}
-		
-	private Square takeRisks(Square tile) {
-		this.looping = 0;
-		return tile;
-	}
 
 		/*System.out.print("SCORE: "+this.Score);*/
 	
 	private void analyze(Square tile) {
+		int z=0, c=0;
 		if(!tile.visited) {
-			if (tile.hasBreeze && tile.hasStench)
+			if (tile.hasBreeze && tile.hasStench) {
 				for (Square risky : tile.getNeighbors()) {
 					if(!risky.isSafe) {
-						risky.pitRisk++;
-						risky.wumpusRisk++;
-					}	
+						if(risky.mayHavePit & !risky.mayHaveWumpus) {
+							risky.pitRisk++;
+							c++;
+						}
+						else if(!risky.mayHavePit && risky.mayHaveWumpus) {
+							risky.wumpusRisk++;
+							z++;
+						}
+						else if(risky.mayHavePit && risky.mayHaveWumpus) {
+							risky.pitRisk++;
+							risky.wumpusRisk++;
+							z++;
+							c++;
+						}
+					}
 				}
+				for(Square risky : tile.getNeighbors()) {
+					if(z==1 && risky.mayHaveWumpus)
+						risky.wumpusRisk+=10000;
+					if(c==1 && risky.mayHavePit)
+						risky.pitRisk+=10000;
+				}
+			}
 			else if (!tile.hasBreeze && !tile.hasStench) {
 				for(Square risky : tile.getNeighbors()) {
 					if(!risky.isSafe) {
 						risky.wumpusRisk = 0;
 						risky.pitRisk = 0;
 						risky.isSafe = true;
+						risky.mayHavePit=false;
+						risky.mayHaveWumpus=false;
 					}
 				}
 			}
 			else if(tile.hasBreeze && !tile.hasStench) {
 				for(Square risky : tile.getNeighbors()) {
-					if(!risky.isSafe)
+					if(!risky.isSafe && risky.mayHavePit) {
 						risky.pitRisk++;
-						risky.wumpusRisk=0;
+						c++;
+					}
+					risky.wumpusRisk=0;
+					risky.mayHaveWumpus=false;
+				}
+				for(Square risky : tile.getNeighbors()) {
+					if(c==1 && risky.mayHavePit)
+						risky.pitRisk+=1000;
 				}
 			}
 			else if(!tile.hasBreeze && tile.hasStench) {
 				for(Square risky : tile.getNeighbors()) {
-					if(!risky.isSafe)
+					if(!risky.isSafe && risky.mayHaveWumpus) {
 						risky.wumpusRisk++;
-						risky.pitRisk=0;
+						z++;
+					}
+					risky.pitRisk=0;
+					risky.mayHavePit=false;
+				}
+				for(Square risky : tile.getNeighbors()) {
+					if(z==1 && risky.mayHaveWumpus)
+						risky.wumpusRisk+=1000;
 				}
 			}
 		}
+		z=0; c=0;
+		tile.visited=true;
+		tile.isSafe=true;
+	}
+	public void analyze2(Square tile) {
+		int z=0, c=0;
+		if (tile.hasBreeze && tile.hasStench) {
+			for (Square risky : tile.getNeighbors()) {
+				if(!risky.isSafe && !risky.unreachable) {
+					if(risky.mayHavePit & !risky.mayHaveWumpus) {
+						risky.pitRisk=risky.pitRisk-1;
+						risky.pitRisk++;
+						c++;
+					}
+					else if(!risky.mayHavePit && risky.mayHaveWumpus) {
+						risky.wumpusRisk=risky.wumpusRisk-1;
+						risky.wumpusRisk++;
+						z++;
+					}
+					else if(risky.mayHavePit && risky.mayHaveWumpus) {
+						risky.pitRisk=risky.pitRisk-1;
+						risky.wumpusRisk=risky.wumpusRisk-1;
+						risky.pitRisk++;
+						risky.wumpusRisk++;
+						z++;
+						c++;
+					}
+				}
+			}
+			for(Square risky : tile.getNeighbors()) {
+				if(z==1 && risky.mayHaveWumpus && !risky.unreachable && !risky.isSafe)
+					risky.wumpusRisk+=10000;
+				if(c==1 && risky.mayHavePit && !risky.unreachable && !risky.isSafe)
+						risky.pitRisk+=10000;
+			}
+		}
+		else if (!tile.hasBreeze && !tile.hasStench) {
+			for(Square risky : tile.getNeighbors()) {
+				if(!risky.isSafe && !risky.unreachable) {
+					risky.wumpusRisk = 0;
+					risky.pitRisk = 0;
+					risky.isSafe = true;
+					risky.mayHavePit=false;
+					risky.mayHaveWumpus=false;
+				}
+			}
+		}
+		else if(tile.hasBreeze && !tile.hasStench) {
+			for(Square risky : tile.getNeighbors()) {
+				if(!risky.isSafe && risky.mayHavePit && !risky.unreachable) {
+					risky.pitRisk=risky.pitRisk-1;
+					risky.pitRisk++;
+					risky.wumpusRisk=0;
+					risky.mayHaveWumpus=false;
+					c++;
+				}
+			}
+			for(Square risky : tile.getNeighbors()) {
+				if(c==1 && risky.mayHavePit && !risky.unreachable && !risky.isSafe)
+					risky.pitRisk+=1000;
+			}
+		}
+		else if(!tile.hasBreeze && tile.hasStench) {
+			for(Square risky : tile.getNeighbors()) {
+				if(!risky.isSafe && risky.mayHaveWumpus && !risky.unreachable) {
+					risky.wumpusRisk=risky.wumpusRisk-1;
+					risky.wumpusRisk++;
+					risky.pitRisk=0;
+					risky.mayHavePit=false;
+					z++;
+				}
+			}
+			for(Square risky : tile.getNeighbors()) {
+				if(z==1 && risky.mayHaveWumpus && !risky.unreachable && !risky.isSafe)
+					risky.wumpusRisk+=1000;
+			}
+		}
+		z=0; c=0;
 		tile.visited=true;
 		tile.isSafe=true;
 	}

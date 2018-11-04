@@ -1,20 +1,10 @@
 package com.labc.Wumpusito;
 
 public class Square {
-	boolean hasWumpus;
-	boolean hasGold;
-	boolean hasPit;
-	boolean hasBreeze;
-	boolean hasStench;
-	boolean hasGlitter;
-	boolean hasPlayer;
-	boolean isSafe;
-	boolean visited;
-	boolean unreachable;
-	int pitRisk;
-	int wumpusRisk;
-	int x,y;
-	int timesVisited;
+	boolean hasWumpus, hasGold, hasPit, hasBreeze, hasStench,
+	hasGlitter, hasPlayer, isSafe, visited, unreachable,
+	mayHavePit, mayHaveWumpus;
+	int pitRisk, wumpusRisk, x, y, timesVisited;
 	float visitedRisk;
 	Square[] neighbors = new Square[4];
 	
@@ -34,6 +24,8 @@ public class Square {
 		this.visited = false;
 		this.unreachable = false;
 		this.timesVisited = 0;
+		this.mayHavePit = true;
+		this.mayHaveWumpus = true;
 	}
 	
 	public void neighbors(Square[][] square) {

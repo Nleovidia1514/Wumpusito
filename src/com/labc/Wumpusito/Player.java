@@ -9,20 +9,20 @@ public class Player {
 	protected int Score;
 	protected int moves;
 	protected int arrows;
-	private Board Board;
+	protected Board board;
 	
-	public Player(Square starting, Board Board) {
-		previous = null;
-		current = starting;
-		arrows = 1;
-		gotGold = false;
-		isAlive = true;
-		Facing = Board.WEST;
-		Score = 0;
-		current.hasPlayer = true;
-		current.visited = false;
-		moves = 0;
-		this.Board = Board;
+	public Player(Square starting, Board Brd) {
+		this.previous = null;
+		this.current = starting;
+		this.arrows = 1;
+		this.gotGold = false;
+		this.isAlive = true;
+		this.Facing = Board.WEST;
+		this.Score = 0;
+		this.current.hasPlayer = true;
+		this.current.visited = false;
+		this.moves = 0;
+		this.board = Brd;
 	}
 	
 	protected boolean shoot() {
@@ -53,7 +53,7 @@ public class Player {
 				trail = null;
 				for (int i=0;i<=Board.COLS;i++)
 					for (int j=0;j<=Board.ROWS;j++)
-						Board.squares[i][j].wumpusRisk=0;
+						board.squares[i][j].wumpusRisk=0;
 			}
 			else {
 				trail = null;
@@ -77,6 +77,7 @@ public class Player {
 			next = current.getNeighbors()[Facing];
 			if(current.x == 4) {
 				current.getNeighbors()[Facing].unreachable = true;
+				current.getNeighbors()[Facing].isSafe = true;
 				next = this.current;
 				current = previous;
 				ow = true;
@@ -87,6 +88,7 @@ public class Player {
 			next = current.getNeighbors()[Facing];
 			if(current.x == 1) {
 				current.getNeighbors()[Facing].unreachable = true;
+				current.getNeighbors()[Facing].isSafe = true;
 				next = this.current;
 				current = previous;
 				ow = true;
@@ -97,6 +99,7 @@ public class Player {
 			next = current.getNeighbors()[Facing];
 			if(current.y == 4) {
 				current.getNeighbors()[Facing].unreachable = true;
+				current.getNeighbors()[Facing].isSafe = true;
 				next = this.current;
 				current = previous;
 				ow = true;
@@ -107,6 +110,7 @@ public class Player {
 			next = current.getNeighbors()[Facing];
 			if(current.y == 1) {
 				current.getNeighbors()[Facing].unreachable = true;
+				current.getNeighbors()[Facing].isSafe = true;
 				next = this.current;
 				current = previous;
 				ow = true;
@@ -116,7 +120,7 @@ public class Player {
 		this.current = next;
 		this.current.timesVisited++;
 		this.Score-=10;
-		this.current.visitedRisk+=0.25;
+		this.current.visitedRisk+=0.50;
 		return ow;
 	}
 	

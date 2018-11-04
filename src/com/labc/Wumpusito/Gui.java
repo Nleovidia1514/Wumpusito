@@ -1,6 +1,5 @@
 package com.labc.Wumpusito;
 
-import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -30,7 +29,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 
 public class Gui extends JFrame{
 	private ImageIcon hunterIcon, Square;
@@ -60,13 +58,13 @@ public class Gui extends JFrame{
 		String img = "";
 		ImageIcon hunterImage;
 		
-		if (AI.getFacing()==board.NORTH)
+		if (AI.getFacing()==Board.NORTH)
 			img = "images/hunter13.jpg";
-		else if (AI.getFacing()==board.EAST)
+		else if (AI.getFacing()==Board.EAST)
 			img = "images/hunter10.jpg";
-		else if (AI.getFacing()==board.SOUTH)
+		else if (AI.getFacing()==Board.SOUTH)
 			img = "images/hunter11.jpg";
-		else if (AI.getFacing()==board.WEST)
+		else if (AI.getFacing()==Board.WEST)
 			img = "images/hunter12.jpg";
 		
 		hunterImage = new ImageIcon(img);
@@ -79,13 +77,13 @@ public class Gui extends JFrame{
 		String img = "";
 		ImageIcon hunterImage;
 		
-		if (AI.getFacing()==board.NORTH)
+		if (AI.getFacing()==Board.NORTH)
 			img = "images/ded13.jpg";
-		else if (AI.getFacing()==board.EAST)
+		else if (AI.getFacing()==Board.EAST)
 			img = "images/ded10.jpg";
-		else if (AI.getFacing()==board.SOUTH)
+		else if (AI.getFacing()==Board.SOUTH)
 			img = "images/ded11.jpg";
-		else if (AI.getFacing()==board.WEST)
+		else if (AI.getFacing()==Board.WEST)
 			img = "images/ded12.jpg";
 		
 		hunterImage = new ImageIcon(img);
@@ -189,7 +187,7 @@ public class Gui extends JFrame{
 			}	
 	}
 	
-	private void chooseGui() {
+	/*private void chooseGui() {
 		JButton pacman, zelda;
 		JPanel chooser, title;
 		JLabel titleLabel;
@@ -208,7 +206,7 @@ public class Gui extends JFrame{
 		this.setTitle("WumpusWorld");
 		this.setPreferredSize(new Dimension(chooser.getWidth(),chooser.getHeight()));
 		
-	}
+	}*/
 	
 	private void initGui() {
 		panel = new JPanel();
@@ -247,8 +245,6 @@ public class Gui extends JFrame{
 		supreme.add(panel1);
 		
 		createLayout(supreme);
-		int height = Square.getIconHeight();
-		int width = Square.getIconWidth();
 		int height1 = supreme.getHeight();
 		int width1 = supreme.getWidth();
 		
@@ -284,7 +280,7 @@ public class Gui extends JFrame{
     }
 	
 	 public static void main(String[] args) throws IOException, InterruptedException {
-	            Gui ex = new Gui();  
+	            new Gui();  
 	 }
 }
 
